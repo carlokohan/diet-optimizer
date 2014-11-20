@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+  		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    	<meta name="description" content="Optimizer using simplex method with diet solver">
+		<title>Ultimate Optimizer</title>
+		<link rel="stylesheet" href="css/pure.css">
+   		<link rel="icon" href="data/favicon.ico" type="image/x-icon">
+
+   		<!--[if lte IE 8]>
+        <link rel="stylesheet" href="css/main-grid-old-ie.css">
+	    <![endif]-->
+	    <!--[if gt IE 8]><!-->
+	        <link rel="stylesheet" href="css/main-grid.css">
+	    <!--<![endif]-->
+
+    	<!--[if lte IE 8]>
+        <link rel="stylesheet" href="css/layouts/blog-old-ie.css">
+	    <![endif]-->
+	    <!--[if gt IE 8]><!-->
+	        <link rel="stylesheet" href="css/layouts/blog.css">
+	    <!--<![endif]-->
+	</head>
+	<body>
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-med-1-4">
+        <div class="header">
+            <hgroup>
+                <h2 class="brand-title">Ultimate Optimizer</h2>
+                <h3 class="brand-tagline">*with Diet Solver</h3>
+            </hgroup>
+        
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a class="pure-button" id="simplexButton" href="#">Ultimate Optimizer</a>
+                        
+                    </li>
+                    <li class="nav-item">
+                        <a class="pure-button" id="dietButton" href="#">Diet Solver</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="content pure-u-1 pure-u-med-3-4">
+        <div>
+            <!-- A wrapper for all the blog posts -->
+
+            <div class="posts">
+
+            	<div id="simplexsolver">
+	                <section class="post">
+	                    <header class="post-header">
+	                        <h2 class="post-title content-subhead">Ultimate Optimizer</h2>
+	                    </header>
+
+	                    <div class="post-description simplexvars">
+	                    	<form class="pure-form">
+		                        <p id="variables">
+		                            How many variables?
+		                            <input type="number" max=10 min=1 id="nVars"/>
+		                        </p>
+		                        <p>
+		                            How many constraints?
+		                            <input type="number" max=10 min=1 id="nCons"/>
+		                        </p>
+		                        
+		                    </form>
+		                        <button class="nextstep pure-button"/>Next</button>
+	                    </div>
+	                    <div id="functions">
+	                    	<form id="funcsNCons" class="pure-form">
+	                    		<label class="pure-radio" for="radio1"><input   type="radio" id="radio1" name="category" value="max" checked />Maximize</label>
+		                        <label for="radio2" class="pure-radio"><input  type="radio" id="radio2" name="category" value="min"/>Minimize
+		                    	</label><br/>
+
+		                    	<p>Objective function:</p>
+		                    	<div id="varsNCons">
+
+		                    	</div>
+		                    	<p>Constraints:</p>
+		                    	<div id="consNCons">
+
+		                    	</div>
+	                    	</form>
+	                    	</br>
+	                    	<button class="backstep pure-button button-warning">Back</button>
+	                    	<button class="simplexsolve pure-button button-success">Solve</button>
+	                    </div>
+	                    <div id="tableau">
+	                    	<button class="backstep2 pure-button button-warning">Back</button>
+	                    	<h1>Tablue</h1>
+	                    	
+	                    	<div id="printtable">
+		                    </div>
+	                    </div>
+
+	                </section>
+            	</div>
+
+            	<div id="dietsolver">
+	                <section class="post">
+	                    <header class="post-header">
+	                        <h2 class="post-title content-subhead" >Diet Problem</h2>
+	                    </header>
+
+	                    <div class="post-description">
+	                        <p>
+	                            Tick the foods that you want for your diet.
+	                        </p>
+	                        <form id="dietform">
+	                        <table id="dietvars" border='1'>
+	                        	
+	                        </table>
+	                        </form>
+	                    </div>
+	                    
+	                </section>
+            	</div>
+
+	            <div class="footer">
+	                <div class="pure-menu pure-menu-horizontal pure-menu-open">
+	                    <ul>
+	                        <li><a href="http://twitter.com/woootiness/">Twitter</a></li>
+	                        <li><a href="http://carlokohan.github.io/">GitHub</a></li>
+	                    </ul>
+	                </div>
+	            </div>
+        	</div>
+    	</div>
+	</div>
+
+	
+</div>
+
+	<script src="js/yui.js"></script>
+	<script>
+	YUI().use('node-base', 'node-event-delegate', function (Y) {
+	    // This just makes sure that the href="#" attached to the <a> elements
+	    // don't scroll you back up the page.
+	    Y.one('body').delegate('click', function (e) {
+	        e.preventDefault();
+	    }, 'a[href="#"]');
+	});
+	</script>
+
+	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="js/scripts.js"> </script>
+
+	</body>
+</html>
