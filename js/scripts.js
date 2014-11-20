@@ -190,23 +190,27 @@ $(document).ready(function(){
 	@param 2D Array
 	*/
 	function printTableau(tableau){
-		var str = '<br/><table border="1"><tr>';
+		var str = '<br/><table class="pure-table pure-table-bordered"><thead><tr>';
 		var nVars = +$("#nVars").val();
 		var nCons = +$("#nCons").val();
 
 		for(var i=0;i<nVars;i++){
-			str += '<td>X'+(i+1)+'</td>';
+			str += '<th>X'+(i+1)+'</th>';
 		}
 
 		for(var i=0;i<nCons;i++){
-			str += '<td>S'+(i+1)+'</td>';
+			str += '<th>S'+(i+1)+'</th>';
 		}
-		str += '<td>Z</td><td>Answer</td></tr>';//print column headers
+		str += '<th>Z</th><th>Answer</th></tr></thead>';//print column headers
 
 		//print values:
 		for(var i=0;i<tableau.length;i++){
 			var temp = tableau[i];
-			str += '<tr>';
+
+			if(i%2 == 0)
+				str += '<tr class="pure-table-odd">';
+			else
+				str += '<tr>';
 
 			for(var j=0;j<temp.length;j++){
 				str += '<td>'+temp[j]+'</td>';
@@ -223,7 +227,7 @@ $(document).ready(function(){
 	@param Array
 	*/
 	function printBasicSolution(basicSolution){
-		var str = '<p>Basic Solution:</p><table border="1"><tr>';
+		var str = '<p>Basic Solution:</p><table class="pure-table pure-table-bordered"><tr>';
 		var index = 0;
 
 		var nVars = +$("#nVars").val();
