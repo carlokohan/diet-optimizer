@@ -68,9 +68,9 @@ $(document).ready(function(){
 		var str='';
 		for (var i = 0; i < nVars; i++) {
 			if(i==(nVars-1))
-				str += '<input type="number" class="pure-u-1-8" id="vars'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '</button>';
+				str += '<input type="number"  step="any" class="pure-u-1-8" id="vars'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '</button>';
 			else
-				str += '<input type="number" class="pure-u-1-8" id="vars'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '+</button>';
+				str += '<input type="number" step="any" class="pure-u-1-8" id="vars'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '+</button>';
 
 		};
 
@@ -80,11 +80,11 @@ $(document).ready(function(){
 		for(var j = 0 ; j<nCons ; j++){
 			for (var i = 0; i <= nVars; i++) { 
 				if(i==nVars)
-					str += '<select class="btn btn-default" id="equals'+(j)+'" name="equals"><option value="lessthan" ><=</option><option value="greaterthan">>=</option></select>'+'<input type="number" class="pure-u-1-8" id="vars'+(j)+'-'+(i+nCons+1)+'"/>';
+					str += '<select class="btn btn-default" id="equals'+(j)+'" name="equals"><option value="lessthan" ><=</option><option value="greaterthan">>=</option></select>'+'<input type="number" step="any" class="pure-u-1-8" id="vars'+(j)+'-'+(i+nCons+1)+'"/>';
 				else if(i==(nVars-1))
-					str += '<input type="number" class="pure-u-1-8" id="vars'+(j)+'-'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '</button>';
+					str += '<input step="any" type="number" class="pure-u-1-8" id="vars'+(j)+'-'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '</button>';
 				else
-					str += '<input type="number" class="pure-u-1-8" id="vars'+(j)+'-'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '+</button>';
+					str += '<input step="any" type="number" class="pure-u-1-8" id="vars'+(j)+'-'+(i)+'"/><button class="pure-button-disabled">X'+ (i+1) + '+</button>';
 
 			};
 			str += '<br/>';
@@ -122,23 +122,24 @@ $(document).ready(function(){
 		//setup the initial tableau
 		if(sss == "max"){
 			var tableau = createTableau(nCons,cols);
-			printTableau(tableau);//initial tableau
+			printTableau(tableau,true);//initial tableau
 
-			var basicSol = getBasicSolution(tableau);
-			printBasicSolution(basicSol);//initial basic solution
+			var basicSol = getBasicSolution(tableau,true);
+			printBasicSolution(basicSol,true);//initial basic solution
 
 			//now we start solving
-			maxSimplex(tableau);
+			maxSimplex(tableau,true);
 
 		} else if(sss == "min"){
-			var tableau = createTableau(nCons,cols);
-			printTableau(tableau);//initial tableau
+			var tableau = createMinTableau(nCons,cols);
 
-			var basicSol = getBasicSolution(tableau);
-			printBasicSolution(basicSol);//initial basic solution
+			printTableau(tableau,false);//initial tableau
+
+			var basicSol = getBasicSolution(tableau,true);
+			printBasicSolution(basicSol,false);//initial basic solution
 
 			//now we start solving
-			//minSimplex(tableau);
+			maxSimplex(tableau,false);
 		}
 	});
 
@@ -147,7 +148,7 @@ $(document).ready(function(){
 	@param 2D Array
 	@return Array
 	*/
-	function getBasicSolution(tableau){
+	function getBasicSolution(tableau,type){
 		var solutions = new Array();
 		var rows = tableau.length;
 		var cols = (+$("#nCons").val())+(+$("#nVars").val())+1;
@@ -183,25 +184,45 @@ $(document).ready(function(){
 
 		}
 
+		if(!type){
+			var sol2 = new Array();
+			
+			for(var j=0;j<tableau[0].length;j++){
+				sol2.push(tableau[tableau.length-1][j]);
+			}
+			return sol2;
+		}
 		return solutions;
 	}
 
 	/*
 	@param 2D Array
 	*/
-	function printTableau(tableau){
+	function printTableau(tableau,type){
 		var str = '<br/><table class="pure-table pure-table-bordered"><thead><tr>';
 		var nVars = +$("#nVars").val();
 		var nCons = +$("#nCons").val();
 
-		for(var i=0;i<nVars;i++){
-			str += '<th>X'+(i+1)+'</th>';
-		}
+		if(type){//for maximization
+			for(var i=0;i<nVars;i++){
+				str += '<th>X'+(i+1)+'</th>';
+			}
 
-		for(var i=0;i<nCons;i++){
-			str += '<th>S'+(i+1)+'</th>';
+			for(var i=0;i<nCons;i++){
+				str += '<th>S'+(i+1)+'</th>';
+			}
+			str += '<th>Z</th><th>Answer</th></tr></thead>';//print column headers
 		}
-		str += '<th>Z</th><th>Answer</th></tr></thead>';//print column headers
+		else{
+			for(var i=0;i<nCons;i++){
+				str += '<th>Y'+(i+1)+'</th>';
+			}
+
+			for(var i=0;i<nVars;i++){
+				str += '<th>S'+(i+1)+'</th>';
+			}
+			str += '<th>b</th></tr></thead>';//print column headers
+		}
 
 		//print values:
 		for(var i=0;i<tableau.length;i++){
@@ -223,26 +244,57 @@ $(document).ready(function(){
 		$("#printtable").append(str);
 	}
 
+	
 	/*
 	@param Array
 	*/
-	function printBasicSolution(basicSolution){
-		var str = '<p>Basic Solution:</p><table class="pure-table pure-table-bordered"><tr>';
+	function printBasicSolution(basicSolution,type){
+		var str = '<p>Basic Solution:</p><table class="pure-table pure-table-bordered"><thead><tr>';
 		var index = 0;
 
-		var nVars = +$("#nVars").val();
-		var nCons = +$("#nCons").val();
+		if(type){
+			var nVars = +$("#nVars").val();
+			var nCons = +$("#nCons").val();
 
-		for(var i=0;i<nVars;i++){
-			str += '<td>X' + (i+1) + ' = ' + basicSolution[index++] + '</td>';
+			for(var i=0;i<nVars;i++){
+				str += '<th>X' + (i+1) + '</th>';
+			}
+
+			for(var i=0;i<nCons;i++){
+				str += '<th>S' + (i+1) + '</th>';
+			}
+			str += '<th>Z</th></tr></thead><tr>';
+
+			for(var i=0;i<nVars;i++){
+				str += '<td>'+ basicSolution[index++] + '</td>';
+			}
+
+			for(var i=0;i<nCons;i++){
+				str += '<td>' + basicSolution[index++] + '</td>';
+			}
+			str += '<td> '+ basicSolution[index]+'</td>';
+
+			str += '</tr></table>';
 		}
+		else{
+			var nVars = +$("#nVars").val();
+			var nCons = +$("#nCons").val();
 
-		for(var i=0;i<nCons;i++){
-			str += '<td>S' + (i+1) + ' = ' + basicSolution[index++] + '</td>';
+			for(var i=0;i<nCons;i++){
+				index++;
+			}
+			for(var i=0;i<nVars;i++){
+				str += '<th>X' + (i+1) + '</th>';
+			}
+			str += '<th>W</th></tr></thead><tr>'
+
+			for(var i=0;i<nVars;i++){
+				str += '<td>' + basicSolution[index++] + '</td>';
+			}
+			str += '<td>'+ basicSolution[index]+'</td>';
+
+			str += '</tr></table>';
 		}
-		str += '<td>Z = '+ basicSolution[index]+'</td>';
-
-		str += '</tr></table>';
 
 		$("#printtable").append(str);
 
@@ -310,21 +362,115 @@ $(document).ready(function(){
 			}
 			tableau.push(temp);
 			//console.log("temp: "+temp);
+
+
 		return tableau;
+	}
+
+	/*
+	@param int, int
+	@return 2D Array
+	*/
+	function createMinTableau(nCons,cols){
+		var tableau = new Array();
+
+		for(var i=0;i<nCons;i++){
+			var temp = new Array();
+			var k=0;
+
+			for(var j=0;j<cols;j++){
+					var id2 = "#equals"+i;
+					var sign = $(id2).val();
+
+					var id = '#vars'+i+'-'+j;
+					var value = +$(id).val();
+
+					if(!isNaN(value)){
+						temp.push(value);
+					}
+			};//for j
+
+			tableau.push(temp);
+			//console.log("min temp: "+temp);
+		}
+
+		var temp = new Array();
+		for(var j=0;j<cols;j++){
+				var id = '#vars'+j;
+				var value = +$(id).val();
+
+				//isNaN in the else if part because there's no "id" in the html-dom with that name
+				//so getting its value:  +$(id).val();  --> returns NaN
+				if(!isNaN(value)){
+					temp.push(value);
+				}else if(isNaN(value)){
+					if(j==(cols-1)){//push 0 for the ans
+						temp.push(0);
+					}
+				}
+		}
+		tableau.push(temp);
+		//console.log("min temp: "+temp);
+
+		//transpose the tableau
+		//console.log("length: "+tableau.length)
+		var transposed = matrixTranspose(tableau);
+
+		var numOfSlack = transposed.length-1;//last row not included
+		//console.log("transposed.length: "+transposed.length);
+		var withSlack = new Array();
+
+		for(var i=0;i<transposed.length-1;i++){
+			var temp = new Array();
+
+			for(var j=0;j<transposed[i].length-1;j++){
+				temp.push(transposed[i][j]);
+			}
+			//add slack
+
+			for(var j=0;j<numOfSlack;j++){
+				if(j==i)
+					temp.push(1);
+				else
+					temp.push(0);
+			}
+
+			//push last column
+			temp.push(transposed[i][transposed[i].length-1]);
+
+			withSlack.push(temp);
+			console.log("withSlack: " +temp);
+		}
+		//for the last row
+		var temp2 = new Array();
+		for(var j=0;j<transposed[0].length-1;j++){
+			temp2.push(-transposed[transposed.length-1][j] );
+		}
+		for(var j=0;j<numOfSlack+1;j++){
+			temp2.push(0);
+		}
+		withSlack.push(temp2);
+		console.log("withSlack: " +temp2);
+
+
+		return withSlack;
 	}
 
 	/**
 	Simplex - Maximize
 	@param 2D Array
 	*/
-	function maxSimplex(tableau){
+	function maxSimplex(tableau,type){
 		var i = 0;
 		var n = tableau.length;
 		//only 100 iterations
 		for(;i<100;i++){	
 			//check if there are no more negative values on the last row
 			if(checkLastRow(tableau[n-1]) == true){
-				alert("Optimization is finished!");
+				notif({
+				  msg: "<b>Success:</b> Optimization is finished!",
+				  type: "success"
+				});
 				break;
 			}
 			else{
@@ -338,12 +484,18 @@ $(document).ready(function(){
 				//we do Gauss-Jordan Elimination
 				tableau = doGaussJordan(tableau,row,column);
 				
-				printTableau(tableau);
-				printBasicSolution(getBasicSolution(tableau));
+				printTableau(tableau,type);
+				printBasicSolution(getBasicSolution(tableau,type),type);
 			}
 		}
-		if(i==100)
-			alert("Not feasible");
+		if(i==100){
+			notif({
+			  msg: "<b>Oops!</b> Optomization is not Feasible!",
+			  type: "error",
+			  position: "center"
+			});
+		}
+			
 	}
 
 	/**
@@ -485,6 +637,28 @@ $(document).ready(function(){
 		}
 
 		return vector1;
+	}
+
+	/**
+	*
+	* @param 2D Array,size
+	* @return 2D Array
+	*/
+	function matrixTranspose(tableau){
+		var transposed = new Array();//the number of rows
+		//console.log("tab: "+tableau)
+		//
+		for(var i=0;i<tableau[0].length;i++){
+			var temp = new Array();
+
+			for(var j=0;j<tableau.length;j++){
+				temp.push(tableau[j][i]);
+			}
+			//console.log("transposed: "+temp);
+			transposed.push(temp);
+		}
+		//console.log(transposed.length);
+		return transposed;
 	}
 
 });
