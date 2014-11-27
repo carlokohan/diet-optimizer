@@ -2,6 +2,7 @@ $(document).ready(function(){
 		$("#dietsolver").hide();
 		$("#functions").hide();
 		$("#tableau").hide();
+		$(".dietresult").hide();
 
 //hide major parts of the site
 		$("#simplexButton").on('click',function(){
@@ -16,21 +17,32 @@ $(document).ready(function(){
 
 //File Reading, nutritional_values.txt is of comma separated format
 		var foodList;
+		var matrix = new Array(64);
+		for(var i=0;i<64;i++){
+			matrix[i] = new Array();
+		}
+			
 		$.get('data/nutritional_values.txt', function(data){
 			foodList = data.split('\n');
 			for(var i = 0;i < foodList.length;i++){
 				foodList[i] = foodList[i].split(',');
+				for(var j=0;j<foodList[i].length;j++){
+					var string = foodList[i][j].toString(foodList[i][j]);
+					matrix[i].push(string);
+					//console.log(typeof(string));
+				}
 			}
+			$.sessionStorage.set('myList', matrix);
 
 			//include the food choices for diet
-			var temp = '<td><input type="checkbox" id="';
+			var temp = '<td><input name="foods" type="checkbox" id="';
 			var temp2 = '"/><label for="';
 			var str ='';
 			for (var i = 1; i <= foodList.length; i++) {
 				var inputid = "food";
 				inputid = inputid.concat(i);
 
-				str += temp + inputid + temp2 + inputid + '">' + foodList[i-1][0] + '</label></td>';
+				str += temp + inputid + '"value="'+ foodList[i-1][0] + temp2 + inputid + '">' + foodList[i-1][0] + '</label></td>';
 
 				if(i%4 == 0){
 					var tr = '<tr>' + str + '</tr>';
@@ -49,15 +61,23 @@ $(document).ready(function(){
 	$(".nextstep").on('click', function(){
 		var str = $("#nVars").val();
 		var nVars = +$("#nVars").val();
-		if(str == ""){
-			alert("Enter number of Variables.");
+		if(str == "" || str <= 0){
+			notif({
+			  msg: "<b>Oops!</b> Invalid number of variables.",
+			  type: "error",
+			  position: "center"
+			});
 			return;
 		}
 
 		str = $("#nCons").val();
 		var nCons = +$("#nCons").val();
-		if(str == ""){
-			alert("Enter number of Constraints.");
+		if(str == "" || str <= 0){
+			notif({
+			  msg: "<b>Oops!</b> Invalid number of constraints.",
+			  type: "error",
+			  position: "center"
+			});
 			return;
 		}
 
@@ -141,6 +161,147 @@ $(document).ready(function(){
 			//now we start solving
 			maxSimplex(tableau,false);
 		}
+	});
+
+//diet problem solver
+	$(".backstep3").on('click',function(){
+		$(".dietresult").hide();
+		$(".foodtable").show();
+		$("#printdietTable").children().remove();
+	});
+
+	$(".dietsolve").on('click',function(){
+		$(".dietresult").show();
+		$(".foodtable").hide();
+
+		
+		var foodList = $.sessionStorage.get('myList');//get stored food matrix from session
+		var minTableau = new Array(11);
+		var maxTableau = new Array(11);
+		var foodNames = new Array();
+		var prices = new Array();
+		var n = 0;
+
+		var minimumValues = new Array(2000, 0, 0, 0, 0, 25, 50, 5000, 50, 800, 10);
+		var maximumValues = new Array(2250, 300, 65, 2400, 300, 100, 100, 50000, 20000, 1600, 30);
+
+		for(var i=0;i<11;i++){
+			maxTableau[i] = new Array();
+			minTableau[i] = new Array();
+		}
+
+		for(var i=1;i<=64;i++){
+			var str = "input[id='food"+i+"']:checked";
+			var checked = $(str).val();
+
+			if(checked != undefined){//store checked foods to a matrix
+				n++;
+				
+				foodNames.push(foodList[i-1][0]);
+				prices.push(foodList[i-1][1]);
+				
+				for(var j=0,k=3;j<11;j++,k++){
+					maxTableau[j].push(-foodList[i-1][k]);
+					minTableau[j].push(foodList[i-1][k]);
+				}
+
+			}
+		}
+		//console.log("min table: "+minTableau[0]);
+		
+		//push max and min values for each nutrient
+		for(var j=0;j<11;j++){
+			maxTableau[j].push(-maximumValues[j]);
+			minTableau[j].push(minimumValues[j]);
+		}
+		var tableau = minTableau.concat(maxTableau);
+		//console.log("joined table: "+tableau[11]);
+
+		//add minimum number of servings per selected food (just put identity matrix)
+		var temp = new Array(n);
+		for(var i=0;i<n;i++){
+			temp[i] = new Array();
+			var k=i;
+
+			for(var j=0;j<n+1;j++){
+				if(k==j)
+					temp[i].push(1);
+				else
+					temp[i].push(0);
+			}
+
+		}
+		//for(var i=0;i<n;i++)
+		//	console.log("min values: "+temp[i]);
+		tableau = tableau.concat(temp);
+
+		//add maximum number of servings per selected food 
+		for(var i=0;i<n;i++){
+			temp[i] = new Array();
+			var k=i;
+
+			for(var j=0;j<n+1;j++){
+				if(k==j)
+					temp[i].push(-1);
+				else{
+					if(j==n)
+						temp[i].push(-10);
+					else
+						temp[i].push(0);
+				}
+			}
+
+		}
+
+		//for(var i=0;i<n;i++)
+		//	console.log("min values: "+temp[i]);
+		tableau = tableau.concat(temp);
+
+		//push objective function (the prices, insert as last row)
+		var temp2 = new Array(n+1);
+		for(var i=0;i<n+1;i++){
+			if(i!=n)
+				temp2[i] = prices[i];
+			else
+				temp2[i] = 0;
+		}
+		tableau.push(temp2);
+		//console.log("tableau last: "+tableau[tableau.length-1]);
+		
+		var transposed = matrixTranspose(tableau);
+
+		//console.log("transposed last: "+transposed.length);
+		//console.log("not yet negated transposed last: "+transposed[transposed.length-1]);
+
+		//negate last row
+		for(var i=0;i<transposed[0].length;i++)
+			transposed[transposed.length-1][i] = (-transposed[transposed.length-1][i]);
+
+		//console.log("negated transposed last: "+transposed[transposed.length-1]);
+
+		//add slack variables (insert n more columns)
+		for(var i=0;i<transposed.length;i++){
+			var k=i;
+
+			for(var j=0;j<n+1;j++){
+				if(k==j)
+					transposed[i].push(1);
+				else
+					transposed[i].push(0);
+			}
+		}
+		//console.log("last row with slack: "+transposed[transposed.length-1]);
+
+		//add prices to the matrix (insert as last column)
+		for(var i=0;i<n+1;i++){
+			if(i!=n)
+				transposed[i].push(prices[i]);
+			else
+				transposed[i].push(0);
+		}
+		//console.log("first row with prices: "+transposed[0].length);
+
+		dietSimplex(transposed,n,foodNames,prices);
 	});
 
 
@@ -286,7 +447,7 @@ $(document).ready(function(){
 			for(var i=0;i<nVars;i++){
 				str += '<th>X' + (i+1) + '</th>';
 			}
-			str += '<th>W</th></tr></thead><tr>'
+			str += '<th>Z</th></tr></thead><tr>'
 
 			for(var i=0;i<nVars;i++){
 				str += '<td>' + basicSolution[index++] + '</td>';
@@ -311,7 +472,7 @@ $(document).ready(function(){
 				var temp = new Array();
 				var k=0;
 
-				for(var j=0;j<cols;j++){
+				for(var j=0;j<cols;j++){//get values based from id of form input
 					var id2 = "#equals"+i;
 					var sign = $(id2).val();
 
@@ -490,7 +651,49 @@ $(document).ready(function(){
 		}
 		if(i==100){
 			notif({
-			  msg: "<b>Oops!</b> Optomization is not Feasible!",
+			  msg: "<b>Oops!</b> Optimization is not Feasible!",
+			  type: "error",
+			  position: "center"
+			});
+		}
+			
+	}
+
+	/**
+	Simplex - Maximize
+	@param 2D Array
+	*/
+	function dietSimplex(tableau,n,foodNames,prices){
+		var i = 0;
+		var n = tableau.length;
+		//only 100 iterations
+		for(;i<100;i++){	
+			//check if there are no more negative values on the last row
+			if(checkLastRow(tableau[n-1]) == true){
+				notif({
+				  msg: "<b>Success:</b> Optimization is finished!",
+				  type: "success"
+				});
+
+				printOptimizedDiet(tableau,n,foodNames,prices);
+				break;
+			}
+			else{
+				//get the column with the greatest negative value based from last row
+				var column = getPivotColumn(tableau[n-1]);
+
+				//get the pivot row based from column
+				var row = getPivotRow(tableau,column);
+				//console.log("row: "+row+" col: "+column);
+
+				//we do Gauss-Jordan Elimination
+				tableau = doGaussJordan(tableau,row,column);
+				//console.log("last row: "+tableau[tableau.length-1]);
+			}
+		}
+		if(i==100){
+			notif({
+			  msg: "<b>Oops!</b> Optimization is not Feasible!",
 			  type: "error",
 			  position: "center"
 			});
@@ -524,7 +727,7 @@ $(document).ready(function(){
 			if(row[i]<row[index])
 				index = i;
 		}
-		console.log("index: "+index);
+		//console.log("index: "+index);
 		return index;
 	}
 
@@ -659,6 +862,32 @@ $(document).ready(function(){
 		}
 		//console.log(transposed.length);
 		return transposed;
+	}
+
+
+	function printOptimizedDiet(tableau,n,foodNames,prices){
+		var str = '<h1>The Optimized Menu</h1><h4>The cost of this optimal diet is $'+tableau[n-1][(3*n)+21]+' per day.</h4><br/><table class="pure-table pure-table-bordered"><thead><tr><th>Food</th><th>Servings</th><th>Cost ($)</th></tr></thead>';
+		
+		//print values:
+		var count =0;
+		for(var j=(2*n)+22, i=0; j<(3*n)+21; j++,i++){
+			if(tableau[n-1][j-1] != 0){
+
+				if(count % 2==0){
+					var cost = prices[i] * tableau[n-1][j-1];
+					str += '<tr class="pure-table-odd"><td>'+foodNames[i]+'</td><td>'+tableau[n-1][j-1]+'</td><td>'+cost+'</td></tr>';
+				}
+				else{
+					var cost = prices[i] * tableau[n-1][j-1];
+					str += '<tr><td>'+foodNames[i]+'</td><td>'+tableau[n-1][j-1]+'</td><td>'+cost+'</td></tr>';
+				}
+
+				count++;
+			}
+		}
+
+		str += '</table>';
+		$("#printdietTable").append(str);
 	}
 
 });
