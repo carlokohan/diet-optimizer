@@ -164,6 +164,18 @@ $(document).ready(function(){
 	});
 
 //diet problem solver
+	$(".select-all").on('click',function(){
+		$(':checkbox').each(function() {
+            this.checked = true;                        
+        });
+	});
+
+	$(".deselect-all").on('click',function(){
+		$(':checkbox').each(function() {
+            this.checked = false;                        
+        });
+	});
+
 	$(".backstep3").on('click',function(){
 		$(".dietresult").hide();
 		$(".foodtable").show();
@@ -395,7 +407,7 @@ $(document).ready(function(){
 				str += '<tr>';
 
 			for(var j=0;j<temp.length;j++){
-				str += '<td>'+temp[j]+'</td>';
+				str += '<td>'+ Math.ceil(temp[j] * 10000)/10000 +'</td>';
 			}
 
 			str += '</tr>';
@@ -427,13 +439,13 @@ $(document).ready(function(){
 			str += '<th>Z</th></tr></thead><tr>';
 
 			for(var i=0;i<nVars;i++){
-				str += '<td>'+ basicSolution[index++] + '</td>';
+				str += '<td>'+ Math.ceil(basicSolution[index++] * 10000)/10000  + '</td>';
 			}
 
 			for(var i=0;i<nCons;i++){
-				str += '<td>' + basicSolution[index++] + '</td>';
+				str += '<td>' + Math.ceil(basicSolution[index++] * 10000)/10000 + '</td>';
 			}
-			str += '<td> '+ basicSolution[index]+'</td>';
+			str += '<td> '+ Math.ceil(basicSolution[index] * 10000)/10000 +'</td>';
 
 			str += '</tr></table>';
 		}
@@ -450,13 +462,13 @@ $(document).ready(function(){
 			str += '<th>Z</th></tr></thead><tr>'
 
 			for(var i=0;i<nVars;i++){
-				str += '<td>' + basicSolution[index++] + '</td>';
+				str += '<td>' + Math.ceil(basicSolution[index++] * 10000)/10000 + '</td>';
 			}
-			str += '<td>'+ basicSolution[index]+'</td>';
+			str += '<td>'+ Math.ceil(basicSolution[index] * 10000)/10000 +'</td>';
 
 			str += '</tr></table>';
 		}
-
+		str += '<hr/>';
 		$("#printtable").append(str);
 
 	}
@@ -528,9 +540,9 @@ $(document).ready(function(){
 		return tableau;
 	}
 
-	/*
-	@param int, int
-	@return 2D Array
+	/**
+	* @param int, int
+	* @return 2D Array
 	*/
 	function createMinTableau(nCons,cols){
 		var tableau = new Array();
@@ -618,8 +630,8 @@ $(document).ready(function(){
 	}
 
 	/**
-	Simplex - Maximize
-	@param 2D Array
+	* Simplex - Maximize
+	* @param 2D Array
 	*/
 	function maxSimplex(tableau,type){
 		var i = 0;
@@ -645,6 +657,7 @@ $(document).ready(function(){
 				//we do Gauss-Jordan Elimination
 				tableau = doGaussJordan(tableau,row,column);
 				
+				$("#printtable").append("<h4>Iteration "+(i+1)+"</h4>");
 				printTableau(tableau,type);
 				printBasicSolution(getBasicSolution(tableau,type),type);
 			}
@@ -660,8 +673,8 @@ $(document).ready(function(){
 	}
 
 	/**
-	Simplex - Maximize
-	@param 2D Array
+	* Simplex - Maximize
+	* @param 2D Array
 	*/
 	function dietSimplex(tableau,n,foodNames,prices){
 		var i = 0;
@@ -702,9 +715,9 @@ $(document).ready(function(){
 	}
 
 	/**
-	Checks if last row has still a negative value (last element not included since it is the answer)
-	@param Array
-	@return boolean
+	* Checks if last row has still a negative value (last element not included since it is the answer)
+	* @param Array
+	* @return boolean
 	*/
 	function checkLastRow(row){
 		for(var i=0;i<row.length-1;i++){
@@ -716,9 +729,9 @@ $(document).ready(function(){
 	}
 	
 	/**
-	Returns the index with the greatest negative value (last element not included since it is the answer)
-	@param Array
-	@return int
+	* Returns the index with the greatest negative value (last element not included since it is the answer)
+	* @param Array
+	* @return int
 	*/
 	function getPivotColumn(row){
 		var index=0;
@@ -865,8 +878,12 @@ $(document).ready(function(){
 	}
 
 
+	/**
+	* Print table of optimized diet
+	* @param 2D Array, int, Array, Array
+	*/
 	function printOptimizedDiet(tableau,n,foodNames,prices){
-		var str = '<h1>The Optimized Menu</h1><h4>The cost of this optimal diet is $'+tableau[n-1][(3*n)+21]+' per day.</h4><br/><table class="pure-table pure-table-bordered"><thead><tr><th>Food</th><th>Servings</th><th>Cost ($)</th></tr></thead>';
+		var str = '<h1>The Optimized Menu</h1><h4>The cost of this optimal diet is $'+ Math.ceil(tableau[n-1][(3*n)+21] * 10000)/10000 +' per day.</h4><br/><table class="pure-table pure-table-bordered"><thead><tr><th>Food</th><th>Servings</th><th>Cost ($)</th></tr></thead>';
 		
 		//print values:
 		var count =0;
@@ -875,11 +892,11 @@ $(document).ready(function(){
 
 				if(count % 2==0){
 					var cost = prices[i] * tableau[n-1][j-1];
-					str += '<tr class="pure-table-odd"><td>'+foodNames[i]+'</td><td>'+tableau[n-1][j-1]+'</td><td>'+cost+'</td></tr>';
+					str += '<tr class="pure-table-odd"><td>'+foodNames[i]+'</td><td>'+ Math.ceil(tableau[n-1][j-1] * 10000)/10000 +'</td><td>'+Math.ceil(cost * 10000)/10000 +'</td></tr>';
 				}
 				else{
 					var cost = prices[i] * tableau[n-1][j-1];
-					str += '<tr><td>'+foodNames[i]+'</td><td>'+tableau[n-1][j-1]+'</td><td>'+cost+'</td></tr>';
+					str += '<tr><td>'+foodNames[i]+'</td><td>'+ Math.ceil(tableau[n-1][j-1] * 10000)/10000 +'</td><td>'+Math.ceil(cost * 10000)/10000+'</td></tr>';
 				}
 
 				count++;
